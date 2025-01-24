@@ -20,6 +20,7 @@ import json
 from Crypto.Hash import keccak
 
 def generate_ethereum_address(user_id):
+    print(user_id)
     # Convert the user ID to bytes (e.g., if the user_id is an integer, we can convert it to bytes)
     user_id_bytes = str(user_id).encode('utf-8')
 
