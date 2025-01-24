@@ -44,7 +44,7 @@ export default function Login() {
       const requestData = new FormData();
       requestData.append("email", formData.email);
       requestData.append("password", formData.password);
-      const response = await axiosInstance.post("/api/v1/login/", requestData);
+      const response = await axiosInstance.post("/login/", requestData);
       console.log("Full response:", response);
       console.log("Response data:", response?.data.data.access);
 
