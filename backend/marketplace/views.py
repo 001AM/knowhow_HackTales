@@ -21,6 +21,7 @@ from Crypto.Hash import keccak
 
 def generate_ethereum_address(user_id):
     # Convert the user ID to bytes (e.g., if the user_id is an integer, we can convert it to bytes)
+    print(user_id)
     user_id_bytes = str(user_id).encode('utf-8')
 
     # Apply keccak256 hash function
