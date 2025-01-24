@@ -3,6 +3,9 @@ import Signup from "../../pages/signup/signup";
 import Home from "../../pages/home/home";
 import NotFound from "../../pages/notfound/notfound";
 import Login from "../../pages/login/login";
+import Marketplace from "../../pages/marketplace/marketplace";
+import ProductPage from "../../pages/productpage/prodoctpage";
+import TravelPlan from "../../pages/travelplan/travelplan";
 const routesConfig = [
   {
     path: "/signup",
@@ -21,8 +24,16 @@ const routesConfig = [
         element: <Home />,
       },
       {
-        path: "/home1",
-        element: <Home />,
+        path: "/marketplace",
+        element: <Marketplace />,
+      },
+      {
+        path: "/products/:pk",
+        element: <ProductPage />,
+      },
+      {
+        path: "/travelplan",
+        element: <TravelPlan />,
       },
     ],
   },
