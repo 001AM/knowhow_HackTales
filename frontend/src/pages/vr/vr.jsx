@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "aframe";
 import { useNavigate } from "react-router-dom";
 
@@ -6,8 +6,24 @@ const VRView = () => {
   const [selectedImage, setSelectedImage] = useState("#a");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const sky = document.querySelector("#sky");
+    sky.addEventListener("loaded", () => {
+      sky.setAttribute("src", selectedImage);
+    });
+
+    // Cleanup previous sky image before setting new one
+    return () => {
+      sky.removeEventListener("loaded", () => {});
+    };
+  }, [selectedImage]);
+
   const changeSky = (imageId) => {
-    setSelectedImage(imageId);
+    const sky = document.querySelector("#sky");
+    sky.setAttribute("src", ""); // Clear current image
+    setTimeout(() => {
+      setSelectedImage(imageId);
+    }, 100); // Small delay before setting new image
   };
 
   return (
@@ -34,10 +50,10 @@ const VRView = () => {
           value={selectedImage}
           onChange={(e) => changeSky(e.target.value)}
         >
-          <option value="#a">Image A</option>
-          <option value="#d">Image D</option>
-          <option value="#e">Image E</option>
-          <option value="#f">Image F</option>
+          <option value="#a">Taj Mahal</option>
+          <option value="#d">Kerala Hills</option>
+          <option value="#e">Kashmir</option>
+          <option value="#f">Kokan Forest</option>
         </select>
       </div>
 
