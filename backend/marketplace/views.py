@@ -18,10 +18,192 @@ from .models import User, Product, Transaction
 from .blockchain import add_points as blockchain_add_points, purchase_product as blockchain_purchase_product
 import json
 from Crypto.Hash import keccak
+import torch
+from transformers import AutoModelForImageClassification
+import requests
+from io import BytesIO
+from torchvision import transforms
+import google.generativeai as genai
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from django.http import JsonResponse
+from PIL import Image
+from django.views.decorators.csrf import csrf_exempt
+from ultralyticsplus import YOLO
+import os
+from dotenv import load_dotenv
+import razorpay
+
+yolo_model = YOLO('foduucom/plant-leaf-detection-and-classification')
+load_dotenv()
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def leafclassify(request):
+    if request.method != "POST":
+        return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+
+    try:
+        if 'image' not in request.FILES:
+            return JsonResponse({'error': 'No image file provided'}, status=400)
+
+        image_file = request.FILES['image']
+        image = Image.open(image_file)
+        results = yolo_model.predict(image)
+
+        if not results[0].boxes:
+            return JsonResponse({"error": "No leaves detected"}, status=404)
+
+        most_confident_box = max(results[0].boxes, key=lambda box: box.conf)
+        leaf_name = yolo_model.names[int(most_confident_box.cls)]
+
+        # Gemini prompts for details and locations
+        details_prompt = f"Provide comprehensive details about {leaf_name} leaf, including its botanical characteristics, nutritional value, and ecological importance. Dont give me the name of leaf at the beginning."
+        locations_prompt = f"List 5 specific countries/regions where {leaf_name} leaf is commonly found, with latitude and longitude coordinates."
+
+        # Generate responses
+        model = genai.GenerativeModel('gemini-pro')
+        details_response = model.generate_content(details_prompt)
+        locations_response = model.generate_content(locations_prompt)
+
+        details_response_final = create_dictionary_from_text(details_response.text)
+        locations_response_final = create_dictionary_from_text(locations_response.text)
+        # Prepare JSON response
+        response_data = {
+            "Leaf Name": str(leaf_name).upper(),
+            "Details": details_response_final,
+            "Locations": locations_response_final
+        }
+
+        return JsonResponse(response_data, safe=False)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def create_dictionary_from_text(text):
+    import re
+    sections = re.split(r"\n\n", text.strip())
+    result = {}
+    current_key = None
+
+    for section in sections:
+        # Identify main headers (keys)
+        if section.startswith("**") and section.endswith("**"):
+            current_key = section.strip("**").strip()
+            result[current_key] = {}
+        # Handle bullet points or key-value pairs
+        elif section.startswith("* "):
+            if current_key:
+                if "Details" not in result[current_key]:
+                    result[current_key]["Details"] = []
+                bullet_points = section.split("\n")
+                for point in bullet_points:
+                    if point.startswith("* "):
+                        result[current_key]["Details"].append(point.strip("* ").strip())
+        # Handle free text or paragraphs under headers
+        elif current_key and ":" not in section:
+            if "Details" not in result[current_key]:
+                result[current_key]["Details"] = []
+            result[current_key]["Details"].append(section.strip())
+        # Handle subsections with colon (key-value pairs)
+        elif current_key and ":" in section:
+            sub_key, sub_value = section.split(":", 1)
+            sub_key = sub_key.strip("* ").strip()
+            sub_value = sub_value.strip()
+            result[current_key][sub_key] = sub_value
+
+    return result
+
+class BirdSpeciesClassifier:
+    def __init__(self, model_name='chriamue/bird-species-classifier'):
+        """Initialize bird species classification model"""
+        self.model = AutoModelForImageClassification.from_pretrained(model_name)
+
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                  std=[0.229, 0.224, 0.225])
+        ])
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
+
+    def predict_species(self, image):
+        """Predict bird species from image"""
+        # Convert to RGB if needed
+        image = image.convert('RGB')
+
+        # Preprocess image
+        input_tensor = self.transform(image).unsqueeze(0).to(self.device)
+
+        # Perform prediction
+        with torch.no_grad():
+            outputs = self.model(input_tensor)
+            logits = outputs.logits
+
+        # Process predictions
+        probabilities = torch.softmax(logits, dim=1)
+        top_k = torch.topk(probabilities, k=5)
+
+        # Prepare results
+        results = []
+        for idx, prob in zip(top_k.indices[0], top_k.values[0]):
+            results.append({
+                'species': self.model.config.id2label[idx.item()],
+                'confidence': prob.item() * 100
+            })
+
+        return results
+
+# Global classifier instance
+classifier = BirdSpeciesClassifier()
+
+
+# Configure Gemini API
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel('gemini-pro')
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def birdclassify(request):
+    """
+    Django view for bird species classification and detail retrieval
+    """
+    if request.method == 'POST':
+        try:
+            # Check if image is in request
+            if 'image' not in request.FILES:
+                return JsonResponse({'error': 'No image uploaded'}, status=400)
+
+            # Get image file
+            image_file = request.FILES['image']
+
+            # Open image with Pillow
+            image = Image.open(image_file)
+
+            # Classify image
+            predictions = classifier.predict_species(image)
+
+            # Take the top predicted bird name
+            top_bird = predictions[0]['species']
+
+            # Query Gemini for bird details
+            prompt = f"""Provide detailed information about the {top_bird} bird species, including its global distribution and habitat. Dont Give me the name of the bird at at the beginning."""
+            gemini_response = model.generate_content(prompt)
+            gemini_response_final = create_dictionary_from_text(str(gemini_response.text))
+            return JsonResponse({
+                'Bird Name': top_bird,
+                'Bird Details': gemini_response_final
+            })
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Only POST method allowed'}, status=405)
 
 def generate_ethereum_address(user_id):
     # Convert the user ID to bytes (e.g., if the user_id is an integer, we can convert it to bytes)
-    print(user_id)
     user_id_bytes = str(user_id).encode('utf-8')
 
     # Apply keccak256 hash function
@@ -143,6 +325,38 @@ def register(request):
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def update_profile(request):
+    try:
+        request_data = request.data.copy()
+        User.objects.filter(id=request.user.id).update(**request_data)
+        return Response({"message":"Updated Successfully."}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_profile(request):
+    try:
+        user = User.objects.get(id=request.user.id)
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phone_number': user.phone_number,
+            'city': user.city,
+            'state': user.state,
+            'pincode': user.pincode,
+            'total_points': user.total_points,
+            'eth_address': user.eth_address,
+            'is_vendor': user.is_vendor
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def login(request):
     try:
         username = request.data.get('username')
@@ -159,6 +373,7 @@ def login(request):
         return Response({'data':{
             'refresh': str(refresh),
             'access': str(refresh.access_token),
+            'is_vendor': user.is_vendor
         }})
 
     except Exception as e:
@@ -174,3 +389,102 @@ def logout(request):
         return Response({'message': 'Successfully logged out'},status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': 'Invalid token'},status=status.HTTP_400_BAD_REQUEST)
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Product
+from .serializers import ProductSerializer
+
+class ProductListCreateView(APIView):
+    """
+    Handles listing all products and creating a new product.
+    """
+    def get(self, request):
+        if request.GET.get('vendor_product') == True:
+            products = Product.objects.filter(created_by=request.user)
+        else:
+            products = Product.objects.all()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        data = request.data.copy()
+        data['created_by'] = request.user.id
+        if 'image' in request.FILES:
+            data['image'] = request.FILES['image']
+        serializer = ProductSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProductDetailView(APIView):
+    """
+    Handles retrieving, updating, and deleting a single product.
+    """
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        product = self.get_object(pk)
+        if product is None:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        product = self.get_object(pk)
+        if product is None:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        data = request.data.copy()
+        if 'image' in request.FILES:
+            data['image'] = request.FILES['image']
+        serializer = ProductSerializer(product, data=data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        product = self.get_object(pk)
+        if product is None:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        product.delete()
+        return Response({"message": "Product deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+    
+client = razorpay.Client(auth=("rzp_test_mXMcUep0P0pD3m", "e807kfLD8jlSuOarSsRHOStE"))
+
+@api_view(['POST'])
+@csrf_exempt
+def create_razorpay_order(request):
+    amount = request.data['amount']
+    
+    # Create order
+    order = client.order.create({
+        'amount': amount * 100,  # amount in paise
+        'currency': 'INR',
+        'payment_capture': 1
+    })
+    
+    return Response({'order': order})
+
+@csrf_exempt
+def verify_razorpay_payment(request):
+    # Verify payment signature
+    params_dict = {
+        'razorpay_payment_id': request.data['razorpay_payment_id'],
+        'razorpay_order_id': request.data['razorpay_order_id'],
+        'razorpay_signature': request.data['razorpay_signature']
+    }
+    
+    try:
+        client.utility.verify_payment_signature(params_dict)
+        # Payment successful, update order status
+        return Response({'status': 'success'})
+    except:
+        return Response({'status': 'failure'}, status=400)

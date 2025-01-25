@@ -4,7 +4,7 @@ import json
 ganache_url = "http://127.0.0.1:7545"  # Ganache RPC URL
 web3 = Web3(Web3.HTTPProvider(ganache_url))
 
-with open("/home/soham/Documents/ecovoyage/EcoVoyage/backend/blockchain/build/contracts/Marketplace.json", "r") as file:
+with open("C:/Users/Soham/EcoVoyage/backend/blockchain/build/contracts/Marketplace.json", "r") as file:
     contract_data = json.load(file)
 
 CONTRACT_ADDRESS = "0xadF77ad51435753087E13dA8Cf58FD4FCdd7C2Be"

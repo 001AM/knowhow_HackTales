@@ -5,12 +5,15 @@ import { useEffect } from "react";
 const State = (props) => {
   const [userid, setUserid] = useState(null);
   const [username, setUsername] = useState(null);
+  const [vendor, setVendor] = useState();
   const [isLogin, setLogin] = useState();
   const [onpage, setPage] = useState("");
   const [theme, setTheme] = useState("light");
 
   const contextValue = {
     username: username,
+    vendor:vendor,
+    setVendor:setVendor,
     setUsername: setUsername,
     userid: userid,
     setUserid: setUserid,

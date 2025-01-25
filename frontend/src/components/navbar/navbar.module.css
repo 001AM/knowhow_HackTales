@@ -2,9 +2,9 @@
     background-color: #38a169;
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
-    padding: 28px 0;
+    padding: 20px 90px;
     color:white;
     border-top: 1px solid #c4c4c4;
 }
@@ -31,4 +31,7 @@
     text-decoration: none;
     color: white;
 
+}
+.logo{
+    font-size: x-large;
 }

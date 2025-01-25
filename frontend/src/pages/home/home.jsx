@@ -1,9 +1,19 @@
-import { Box, Card, CardBody, CardFooter, CardHeader, Heading, Image, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Heading,
+  Image,
+  Text,
+} from "@chakra-ui/react";
 import { FaArrowAltCircleRight } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
-    <>
+    <div style={{ marginTop: "8vh" }}>
       <Box>
         <Box display="flex" bg="#38a169" borderBottomRadius="80%">
           <Box
@@ -18,7 +28,7 @@ export default function Home() {
             </Text>
           </Box>
           <Box width="40%">
-            <Image src="/hero.png" alt="src" width="100%"/>
+            <Image src="/hero.png" alt="src" width="100%" />
           </Box>
         </Box>
         <Box mt="10%" px="5%" mb="5%">
@@ -33,10 +43,21 @@ export default function Home() {
               </CardHeader>
               <CardBody>
                 <Text fontStyle="italic" fontWeight="light">
-                "Plan Smarter, Travel Greener: Discover eco-friendly routes for a better tomorrow!"
+                  "Plan Smarter, Travel Greener: Discover eco-friendly routes
+                  for a better tomorrow!"
                 </Text>
               </CardBody>
-              <CardFooter cursor="pointer" display="flex" alignItems="center" gap="5px"><Text fontSize="larger">Explore Now</Text><FaArrowAltCircleRight fontSize="larger"/></CardFooter>
+              <Link to="/travelplan">
+                <CardFooter
+                  cursor="pointer"
+                  display="flex"
+                  alignItems="center"
+                  gap="5px"
+                >
+                  <Text fontSize="larger">Explore Now</Text>
+                  <FaArrowAltCircleRight fontSize="larger" />
+                </CardFooter>
+              </Link>
             </Card>
             <Card>
               <CardHeader>
@@ -44,10 +65,21 @@ export default function Home() {
               </CardHeader>
               <CardBody>
                 <Text fontStyle="italic" fontWeight="light">
-                "Snap, Learn, Conserve: Unlock the secrets of nature with just a photo!"
+                  "Snap, Learn, Conserve: Unlock the secrets of nature with just
+                  a photo!"
                 </Text>
               </CardBody>
-              <CardFooter cursor="pointer" display="flex" alignItems="center" gap="5px"><Text fontSize="larger">Explore Now</Text><FaArrowAltCircleRight fontSize="larger"/></CardFooter>
+              <Link to="/biodiversity">
+                <CardFooter
+                  cursor="pointer"
+                  display="flex"
+                  alignItems="center"
+                  gap="5px"
+                >
+                  <Text fontSize="larger">Explore Now</Text>
+                  <FaArrowAltCircleRight fontSize="larger" />
+                </CardFooter>
+              </Link>
             </Card>
             <Card>
               <CardHeader>
@@ -55,10 +87,21 @@ export default function Home() {
               </CardHeader>
               <CardBody>
                 <Text fontStyle="italic" fontWeight="light">
-                "Earn Green Rewards: Save emissions, redeem eco-friendly treasures!"
+                  "Earn Green Rewards: Save emissions, redeem eco-friendly
+                  treasures!"
                 </Text>
               </CardBody>
-              <CardFooter cursor="pointer" display="flex" alignItems="center" gap="5px"><Text fontSize="larger">Explore Now</Text><FaArrowAltCircleRight fontSize="larger"/></CardFooter>
+              <Link to="/marketplace">
+                <CardFooter
+                  cursor="pointer"
+                  display="flex"
+                  alignItems="center"
+                  gap="5px"
+                >
+                  <Text fontSize="larger">Explore Now</Text>
+                  <FaArrowAltCircleRight fontSize="larger" />
+                </CardFooter>
+              </Link>
             </Card>
             <Card>
               <CardHeader>
@@ -66,14 +109,23 @@ export default function Home() {
               </CardHeader>
               <CardBody>
                 <Text fontStyle="italic" fontWeight="light">
-                "Experience Nature Anywhere: Dive into breathtaking VR adventures!"
+                  "Experience Nature Anywhere: Dive into breathtaking VR
+                  adventures!"
                 </Text>
               </CardBody>
-              <CardFooter cursor="pointer" display="flex" alignItems="center" gap="5px"><Text fontSize="larger">Explore Now</Text><FaArrowAltCircleRight fontSize="larger"/></CardFooter>
+              <CardFooter
+                cursor="pointer"
+                display="flex"
+                alignItems="center"
+                gap="5px"
+              >
+                <Text fontSize="larger">Explore Now</Text>
+                <FaArrowAltCircleRight fontSize="larger" />
+              </CardFooter>
             </Card>
           </Box>
         </Box>
       </Box>
-    </>
+    </div>
   );
 }

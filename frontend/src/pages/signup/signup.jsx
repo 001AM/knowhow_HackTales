@@ -10,6 +10,8 @@ import {
 } from "@chakra-ui/react";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import axiosInstance from "../../axios/axiosInstance";
 import Context from "../../context/context";
 import Navbar from "../../components/navbar";
@@ -59,23 +61,22 @@ export default function SignUp() {
       console.log("Response data:", response?.data.data.access);
 
       if (response.data.data.access && response.data.data.refresh) {
-        // authContext.setTokens(
-        //   response.data.data.access,
-        //   response.data.data.refresh,
-        // );
         localStorage.setItem("access_token", response.data.data.access);
         localStorage.setItem("refresh_token", response.data.data.refresh);
         setLogin(true);
-        navigate("/home");
+        toast.success("Registration successful!");
+        navigate("/");
       }
     } catch (error) {
       console.error("Registration error:", error);
       console.log("Error response:", error.response);
+      toast.error("Registration failed. Please try again.");
     }
   };
 
   return (
     <>
+      <ToastContainer />
       <Navbar />
       <Box display="flex">
         <Box width="50%" display="flex" justifyContent="center">
@@ -204,6 +205,14 @@ export default function SignUp() {
             >
               Signup
             </Button>
+          </Box>
+          <Box display="flex" gap="5px" justifyContent="center" mt="2%">
+            <Text>Are you a Vendor?</Text>
+            <Link to="/vendorSignup" color="blue">
+              {" "}
+              <Text color="blue">Vendor Signup</Text>{" "}
+            </Link>
+            <Text>Now!!</Text>
           </Box>
           <Box display="flex" gap="5px" justifyContent="center" mt="2%">
             <Text>Already a User?</Text>

@@ -43,8 +43,10 @@ db.sqlite3
 /venv
 *.env
 /backend/env
+
 /backend/marketplace/migrations/*
 !/backend/marketplace/migrations/__init__.py  
+/backend/marketplace/blockchain.py
 # migrations/*
 # !migrations/__init__.py
 

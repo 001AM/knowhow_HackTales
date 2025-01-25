@@ -1,0 +1,92 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>360 Degree VR View</title>
+        <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+        <style>
+            /* Text overlay style */
+            .text-overlay {
+                position: absolute;
+                border-radius: 20px;
+                bottom: 30px;
+                left: 30px;
+                right: 30px;
+                background-color: rgba(255, 255, 255, 0.8);
+                color: black;
+                padding: 10px;
+                text-align: center;
+                font-size: 16px;
+                box-sizing: border-box;
+                width: calc(
+                    100% - 60px
+                ); /* Adjust width to account for both left and right margins */
+                margin: 0 auto; /* Center the text overlay horizontally */
+            }
+
+            /* Dropdown styling */
+            .dropdown-container {
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: rgba(255, 255, 255, 0.9);
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            select {
+                padding: 5px;
+                font-size: 16px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+            }
+        </style>
+    </head>
+    <body>
+        <a-scene>
+            <a-assets>
+                <!-- Define all images -->
+                <img id="a" src="/media/images/a.jpeg" />
+                <img id="d" src="/media/images/b.jpeg" />
+                <img id="e" src="/media/images/e.jpeg" />
+                <img id="f" src="/media/images/d.jpeg" />
+            </a-assets>
+
+            <!-- 360-degree view container -->
+            <a-sky id="sky" src="#a" rotation="0 -90 0"></a-sky>
+
+            <!-- Camera for interaction -->
+            <a-entity position="0 0 1.5">
+                <a-camera></a-camera>
+            </a-entity>
+        </a-scene>
+
+        <!-- Dropdown for image selection -->
+        <div class="dropdown-container">
+            <label for="panorama-select">Choose a panorama:</label>
+            <select id="panorama-select" onchange="changeSky(this.value)">
+                <option value="#a">Image A</option>
+                <option value="#d">Image D</option>
+                <option value="#e">Image E</option>
+                <option value="#f">Image F</option>
+            </select>
+        </div>
+
+        <!-- Text overlay -->
+        <div class="text-overlay">
+            Choose an image from the dropdown to explore it in 360 degrees.
+        </div>
+
+        <script>
+            // Function to change the sky's texture
+            function changeSky(imageId) {
+                const sky = document.querySelector("#sky");
+                sky.setAttribute("src", imageId);
+            }
+        </script>
+    </body>
+</html>

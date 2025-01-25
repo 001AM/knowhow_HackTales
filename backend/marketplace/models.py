@@ -11,18 +11,22 @@ class User(AbstractUser):
     address2 = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=10, blank=True, null=True)
+    is_vendor = models.BooleanField(default=False)
     total_points = models.IntegerField(default=0)
     eth_address = models.CharField(max_length=42, unique=True, null=True,blank=True)
+    gstin_no = models.CharField(max_length=42, unique=True, null=True,blank=True)
 
     def __str__(self):
         return self.username
 
 
 class Product(models.Model):
+    image = models.FileField(upload_to="product_images/",default=None)
     name = models.CharField(max_length=255)
     description = models.TextField()
     price_in_points = models.IntegerField()
     stock = models.PositiveIntegerField(default=0)
+    created_by = models.ForeignKey(User,on_delete=models.CASCADE,default=None)
 
 class Transaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

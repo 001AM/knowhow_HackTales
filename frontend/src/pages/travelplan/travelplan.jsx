@@ -3,7 +3,7 @@ import Map from "../../components/map/map";
 
 function TravelPlan() {
   return (
-    <div className="w-full">
+    <div style={{ marginTop: "12vh" }}>
       <Map />
     </div>
   );

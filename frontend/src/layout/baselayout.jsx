@@ -10,7 +10,7 @@ function BaseLayout() {
         <nav className="top-0 w-full text-white absolute">
           <Navbar />
         </nav>
-        <div className="px-2 mt-4 w-full">
+        <div className="w-full">
           <Outlet />
         </div>
         <Footer />

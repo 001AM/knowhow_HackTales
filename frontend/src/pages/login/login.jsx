@@ -13,9 +13,12 @@ import axiosInstance from "../../axios/axiosInstance";
 import Context from "../../context/context";
 import Navbar from "../../components/navbar";
 import Footer from "../../components/footer/footer";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 export default function Login() {
   const navigate = useNavigate();
-  const { isLogin, setLogin } = React.useContext(Context);
+  const { isLogin, setLogin, setVendor } = React.useContext(Context);
   const [show, setShow] = React.useState(false);
   const [formData, setFormData] = React.useState({
     username: "",
@@ -42,26 +45,53 @@ export default function Login() {
     try {
       console.log("Sending login request...");
       const requestData = new FormData();
-      requestData.append("email", formData.email);
+      requestData.append("username", formData.username);
       requestData.append("password", formData.password);
       const response = await axiosInstance.post("/login/", requestData);
       console.log("Full response:", response);
       console.log("Response data:", response?.data.data.access);
 
       if (response.data.data.access && response.data.data.refresh) {
-        // Ensure we have access to the context methods
         localStorage.setItem("access_token", response.data.data.access);
         localStorage.setItem("refresh_token", response.data.data.refresh);
         setLogin(true);
+        setVendor(response.data.data.is_vendor);
+        toast.success("Login successful!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
         navigate("/dashboard");
       }
     } catch (error) {
       console.error("Login error:", error);
       console.log("Error response:", error.response);
+      toast.error("Login failed. Please check your credentials.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <Navbar />
       <Box display="flex">
         <Box width="50%" display="flex" justifyContent="center">
@@ -84,6 +114,7 @@ export default function Login() {
               mt="10%"
               width="400px"
               focusBorderColor="green"
+              name="username"
               value={formData.username}
               onChange={handleChange}
             />
@@ -93,6 +124,7 @@ export default function Login() {
                 type={show ? "text" : "password"}
                 placeholder="Password"
                 focusBorderColor="green"
+                name="password"
                 value={formData.password}
                 onChange={handleChange}
               />
